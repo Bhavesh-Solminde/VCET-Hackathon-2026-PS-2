@@ -1,19 +1,19 @@
-import { Zap } from 'lucide-react'
+import { Lightning } from '@phosphor-icons/react'
 import { Tab } from '../App'
 import { useSimulator } from '../context/SimulatorContext'
 import { SimMode } from '../data'
 
 const TABS: { id: Tab; label: string }[] = [
-  { id: 'dashboard',    label: 'Dashboard' },
-  { id: 'cache-items',  label: 'Cache Items' },
+  { id: 'dashboard',    label: 'Dashboard'    },
+  { id: 'cache-items',  label: 'Cache Items'  },
   { id: 'how-it-works', label: 'How It Works' },
-  { id: 'simulator',    label: 'Simulator' },
+  { id: 'simulator',    label: 'Simulator'    },
 ]
 
-const MODE_BADGES: Record<SimMode, { label: string; color: string }> = {
-  normal:      { label: 'Normal',     color: 'bg-slate-700 text-slate-300' },
-  'flash-sale': { label: 'Flash Sale', color: 'bg-orange-500/20 text-orange-400 border border-orange-500/40' },
-  idle:         { label: 'Idle',       color: 'bg-slate-600/30 text-slate-400 border border-slate-500/40' },
+const MODE_LABEL: Record<SimMode, string> = {
+  normal:       'NORMAL',
+  'flash-sale': 'FLASH SALE',
+  idle:         'IDLE',
 }
 
 interface HeaderProps {
@@ -23,56 +23,52 @@ interface HeaderProps {
 
 export default function Header({ activeTab, onTabChange }: HeaderProps) {
   const { mode } = useSimulator()
-  const badge = MODE_BADGES[mode]
 
   return (
     <header
-      className="sticky top-0 z-50 border-b"
-      style={{
-        background: 'rgba(4, 8, 26, 0.92)',
-        backdropFilter: 'blur(16px)',
-        borderColor: 'var(--border)',
-      }}
+      className="sticky top-0 z-50"
+      style={{ background: 'rgba(13,13,13,0.96)', borderBottom: '1px solid var(--border)', backdropFilter: 'blur(12px)' }}
     >
-      <div className="max-w-screen-xl mx-auto px-6">
-        <div className="flex items-center justify-between py-4">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-blue-600/20 border border-blue-500/30">
-              <Zap size={18} className="text-blue-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-base font-semibold text-white tracking-tight">
-                  Predictive Caching Engine
-                </span>
-                {mode !== 'normal' && (
-                  <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full font-mono uppercase tracking-wider ${badge.color}`}>
-                    {badge.label}
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
-                Smart Cache. Lower Costs. Stronger Systems.
-              </p>
-            </div>
-          </div>
+      <div className="max-w-screen-xl mx-auto px-6 h-[60px] flex items-center justify-between">
 
-          <div className="flex items-center gap-1 bg-slate-900/60 border border-slate-800/80 rounded-xl p-1">
-            {TABS.map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => onTabChange(tab.id)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 whitespace-nowrap ${
-                  activeTab === tab.id
-                    ? 'bg-blue-600 text-white shadow-lg shadow-blue-600/20'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+        {/* Wordmark */}
+        <div className="flex items-center gap-2.5">
+          <Lightning size={16} weight="fill" style={{ color: 'var(--accent)' }} />
+          <span className="mono text-sm font-semibold tracking-tight" style={{ color: 'var(--text)', letterSpacing: '-0.01em' }}>
+            PCE
+          </span>
+          <span
+            className="mono text-[10px] px-1.5 py-0.5 rounded"
+            style={{
+              background: mode === 'flash-sale' ? 'rgba(251,146,60,0.15)' : 'var(--surface-2)',
+              color: mode === 'flash-sale' ? '#fb923c' : 'var(--text-3)',
+              border: `1px solid ${mode === 'flash-sale' ? 'rgba(251,146,60,0.3)' : 'var(--border)'}`,
+            }}
+          >
+            {MODE_LABEL[mode]}
+          </span>
         </div>
+
+        {/* Tabs */}
+        <nav className="flex items-center gap-1">
+          {TABS.map(tab => (
+            <button
+              key={tab.id}
+              onClick={() => onTabChange(tab.id)}
+              className="relative px-4 py-1.5 text-xs font-medium transition-colors duration-100"
+              style={{ color: activeTab === tab.id ? 'var(--text)' : 'var(--text-3)' }}
+            >
+              {tab.label}
+              {activeTab === tab.id && (
+                <span
+                  className="absolute bottom-0 left-0 right-0 h-[1px]"
+                  style={{ background: 'var(--accent)' }}
+                />
+              )}
+            </button>
+          ))}
+        </nav>
+
       </div>
     </header>
   )

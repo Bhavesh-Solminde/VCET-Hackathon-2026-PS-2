@@ -1,189 +1,186 @@
 import { useEffect, useState, useCallback } from 'react'
-import { ChevronUp, ChevronDown, ChevronsUpDown, Search } from 'lucide-react'
+import { ArrowUp, ArrowDown, ArrowsDownUp, MagnifyingGlass } from '@phosphor-icons/react'
 import { BASE_CACHE_ITEMS, CacheItem, CacheStatus, applyModeToItems } from '../data'
 import { useSimulator } from '../context/SimulatorContext'
 
 type SortKey = keyof Pick<CacheItem, 'key' | 'accessFrequency' | 'ttlSeconds' | 'status' | 'lastAccessedSeconds'>
 type SortDir = 'asc' | 'desc'
 
-const STATUS_STYLE: Record<CacheStatus, string> = {
-  hot:     'bg-red-500/15 text-red-400 border border-red-500/30',
-  cold:    'bg-blue-500/15 text-blue-400 border border-blue-500/30',
-  evicted: 'bg-slate-600/20 text-slate-500 border border-slate-600/30',
+const STATUS: Record<CacheStatus, { label: string; color: string }> = {
+  hot:     { label: 'HOT', color: 'var(--red)'   },
+  cold:    { label: 'CLD', color: 'var(--blue)'  },
+  evicted: { label: 'EVT', color: 'var(--text-3)' },
 }
 
-const STATUS_DOT: Record<CacheStatus, string> = {
-  hot:     'bg-red-400',
-  cold:    'bg-blue-400',
-  evicted: 'bg-slate-600',
-}
-
-function SortIcon({ col, active, dir }: { col: string; active: SortKey; dir: SortDir }) {
-  if (col !== active) return <ChevronsUpDown size={13} className="text-slate-600" />
+function SortBtn({ col, active, dir }: { col: string; active: SortKey; dir: SortDir }) {
+  if (col !== active) return <ArrowsDownUp size={11} style={{ color: 'var(--text-3)' }} />
   return dir === 'asc'
-    ? <ChevronUp size={13} className="text-blue-400" />
-    : <ChevronDown size={13} className="text-blue-400" />
+    ? <ArrowUp size={11} style={{ color: 'var(--accent)' }} />
+    : <ArrowDown size={11} style={{ color: 'var(--accent)' }} />
 }
 
 export default function CacheItems() {
   const { mode } = useSimulator()
   const [items, setItems] = useState<CacheItem[]>(() => applyModeToItems(BASE_CACHE_ITEMS, mode))
-  const [filterStatus, setFilterStatus] = useState<CacheStatus | 'all'>('all')
+  const [filter, setFilter] = useState<CacheStatus | 'all'>('all')
   const [search, setSearch] = useState('')
   const [sortKey, setSortKey] = useState<SortKey>('accessFrequency')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
 
-  useEffect(() => {
-    setItems(applyModeToItems(BASE_CACHE_ITEMS, mode))
-  }, [mode])
+  useEffect(() => { setItems(applyModeToItems(BASE_CACHE_ITEMS, mode)) }, [mode])
 
   useEffect(() => {
     const id = setInterval(() => {
-      setItems(prev =>
-        prev.map(item => {
-          if (item.status === 'evicted') return item
-          const delta = Math.round((Math.random() - 0.45) * 60)
-          return { ...item, accessFrequency: Math.max(1, item.accessFrequency + delta) }
-        })
-      )
+      setItems(prev => prev.map(item =>
+        item.status === 'evicted' ? item
+          : { ...item, accessFrequency: Math.max(1, item.accessFrequency + Math.round((Math.random() - 0.45) * 55)) }
+      ))
     }, 2500)
     return () => clearInterval(id)
   }, [])
 
-  const handleSort = useCallback((key: SortKey) => {
+  const toggleSort = useCallback((key: SortKey) => {
     setSortKey(prev => {
       if (prev === key) { setSortDir(d => d === 'asc' ? 'desc' : 'asc'); return key }
-      setSortDir('desc')
-      return key
+      setSortDir('desc'); return key
     })
   }, [])
 
-  const filtered = items
-    .filter(i => filterStatus === 'all' || i.status === filterStatus)
+  const visible = items
+    .filter(i => filter === 'all' || i.status === filter)
     .filter(i => !search || i.key.toLowerCase().includes(search.toLowerCase()))
     .sort((a, b) => {
       const va = a[sortKey], vb = b[sortKey]
-      const cmp = typeof va === 'string' ? va.localeCompare(vb as string) : (va as number) - (vb as number)
+      const cmp = typeof va === 'string' ? (va as string).localeCompare(vb as string) : (va as number) - (vb as number)
       return sortDir === 'asc' ? cmp : -cmp
     })
 
   const counts = items.reduce((acc, i) => ({ ...acc, [i.status]: (acc[i.status] ?? 0) + 1 }), {} as Record<string, number>)
 
-  const FilterBtn = ({ status, label }: { status: CacheStatus | 'all'; label: string }) => (
-    <button
-      onClick={() => setFilterStatus(status)}
-      className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-        filterStatus === status
-          ? status === 'all'   ? 'bg-blue-600 text-white'
-          : status === 'hot'   ? 'bg-red-500/30 text-red-300 border border-red-500/50'
-          : status === 'cold'  ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50'
-                               : 'bg-slate-600/40 text-slate-300 border border-slate-500/50'
-          : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/60'
-      }`}
-    >
-      {label}{status !== 'all' && counts[status] != null ? ` (${counts[status]})` : status === 'all' ? ` (${items.length})` : ''}
-    </button>
-  )
-
-  const ColHeader = ({ col, label, className = '' }: { col: SortKey; label: string; className?: string }) => (
+  const Th = ({ col, label }: { col: SortKey; label: string }) => (
     <th
-      className={`px-4 py-3 text-left text-[11px] font-semibold text-slate-500 uppercase tracking-wider cursor-pointer select-none hover:text-slate-300 transition-colors ${className}`}
-      onClick={() => handleSort(col)}
+      className="px-4 py-2.5 text-left cursor-pointer select-none"
+      onClick={() => toggleSort(col)}
+      style={{ borderBottom: '1px solid var(--border)' }}
     >
-      <div className="flex items-center gap-1">
-        {label}
-        <SortIcon col={col} active={sortKey} dir={sortDir} />
+      <div className="flex items-center gap-1 mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
+        {label} <SortBtn col={col} active={sortKey} dir={sortDir} />
       </div>
     </th>
   )
 
   return (
-    <div className="animate-fade-in space-y-4">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h2 className="text-base font-semibold text-white">Cache Item Registry</h2>
-          <p className="text-xs text-slate-500 mt-0.5">Live updates every 2.5s — frequencies adjust automatically</p>
+    <div className="animate-fade-in">
+      {/* Toolbar */}
+      <div
+        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3"
+        style={{ border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--surface)' }}
+      >
+        <div className="flex items-center gap-1">
+          {(['all', 'hot', 'cold', 'evicted'] as const).map(s => (
+            <button
+              key={s}
+              onClick={() => setFilter(s)}
+              className="mono text-[10px] px-2.5 py-1 uppercase tracking-wider transition-colors"
+              style={{
+                color:      filter === s ? (s === 'all' ? 'var(--text)' : STATUS[s as CacheStatus]?.color ?? 'var(--text)') : 'var(--text-3)',
+                background: filter === s ? 'var(--surface-2)' : 'transparent',
+                border:     `1px solid ${filter === s ? 'var(--border-bright)' : 'transparent'}`,
+              }}
+            >
+              {s === 'all' ? `all (${items.length})` : `${STATUS[s].label} (${counts[s] ?? 0})`}
+            </button>
+          ))}
         </div>
+
         <div className="relative">
-          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+          <MagnifyingGlass
+            size={11}
+            style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--text-3)' }}
+          />
           <input
             type="text"
-            placeholder="Search keys..."
+            placeholder="filter keys..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="pl-8 pr-3 py-1.5 text-xs rounded-lg border text-slate-300 placeholder-slate-600 focus:outline-none focus:border-blue-500/60 transition-colors"
-            style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+            className="mono text-[11px] pl-7 pr-3 py-1.5 w-48 focus:outline-none"
+            style={{
+              background: 'var(--surface-2)',
+              border: '1px solid var(--border)',
+              color: 'var(--text)',
+            }}
           />
         </div>
       </div>
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <FilterBtn status="all"     label="All" />
-        <FilterBtn status="hot"     label="Hot" />
-        <FilterBtn status="cold"    label="Cold" />
-        <FilterBtn status="evicted" label="Evicted" />
+      {/* Table */}
+      <div style={{ border: '1px solid var(--border)' }} className="overflow-x-auto">
+        <table className="w-full min-w-[600px]">
+          <thead style={{ background: 'var(--surface)' }}>
+            <tr>
+              <Th col="key"                 label="Key"         />
+              <Th col="accessFrequency"     label="Freq"        />
+              <Th col="ttlSeconds"          label="TTL"         />
+              <Th col="status"              label="Status"      />
+              <Th col="lastAccessedSeconds" label="Last Access" />
+            </tr>
+          </thead>
+          <tbody>
+            {visible.map((item, i) => (
+              <tr
+                key={item.id}
+                className="transition-colors group"
+                style={{
+                  borderBottom: i < visible.length - 1 ? '1px solid var(--border-dim)' : undefined,
+                }}
+              >
+                <td className="px-4 py-2.5">
+                  <span className="mono text-[11px]" style={{ color: 'var(--text-2)' }}>{item.key}</span>
+                </td>
+                <td className="px-4 py-2.5">
+                  <span className="mono text-[11px] tabular-nums" style={{ color: 'var(--text)' }}>
+                    {item.accessFrequency.toLocaleString()}
+                  </span>
+                </td>
+                <td className="px-4 py-2.5">
+                  <span
+                    className="mono text-[11px]"
+                    style={{ color: item.status === 'evicted' ? 'var(--text-3)' : 'var(--text-2)' }}
+                  >
+                    {item.ttl}
+                  </span>
+                </td>
+                <td className="px-4 py-2.5">
+                  <span
+                    className="mono text-[10px] font-semibold uppercase tracking-wider"
+                    style={{ color: STATUS[item.status].color }}
+                  >
+                    {STATUS[item.status].label}
+                  </span>
+                </td>
+                <td className="px-4 py-2.5">
+                  <span className="mono text-[11px]" style={{ color: 'var(--text-3)' }}>
+                    {item.lastAccessed}
+                  </span>
+                </td>
+              </tr>
+            ))}
+            {visible.length === 0 && (
+              <tr>
+                <td colSpan={5} className="px-4 py-10 text-center mono text-[11px]" style={{ color: 'var(--text-3)' }}>
+                  no items match filter
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
 
       <div
-        className="rounded-2xl border overflow-hidden"
-        style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
+        className="px-4 py-2 mono text-[10px]"
+        style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-3)' }}
       >
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px]">
-            <thead>
-              <tr style={{ borderBottom: '1px solid rgba(59,130,246,0.1)', background: 'rgba(255,255,255,0.02)' }}>
-                <ColHeader col="key"                  label="Cache Key"         className="w-[34%]" />
-                <ColHeader col="accessFrequency"      label="Freq"              className="w-[14%]" />
-                <ColHeader col="ttlSeconds"           label="TTL"               className="w-[12%]" />
-                <ColHeader col="status"               label="Status"            className="w-[14%]" />
-                <ColHeader col="lastAccessedSeconds"  label="Last Accessed"     className="w-[16%]" />
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.map((item, i) => (
-                <tr
-                  key={item.id}
-                  className="transition-colors duration-200 hover:bg-white/[0.02]"
-                  style={{
-                    borderBottom: i < filtered.length - 1 ? '1px solid rgba(255,255,255,0.04)' : undefined,
-                  }}
-                >
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-xs text-slate-300 bg-slate-800/60 px-2 py-0.5 rounded border border-slate-700/60">
-                      {item.key}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="font-mono text-xs text-slate-300">
-                      {item.accessFrequency.toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`font-mono text-xs ${item.status === 'evicted' ? 'text-slate-600' : 'text-slate-300'}`}>
-                      {item.ttl}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full ${STATUS_STYLE[item.status]}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${STATUS_DOT[item.status]}`} />
-                      {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className="text-xs text-slate-500">{item.lastAccessed}</span>
-                  </td>
-                </tr>
-              ))}
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="px-4 py-12 text-center text-slate-600 text-sm">
-                    No cache items match your filter
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        {visible.length} / {items.length} keys shown - frequencies update every 2.5s
       </div>
     </div>
   )

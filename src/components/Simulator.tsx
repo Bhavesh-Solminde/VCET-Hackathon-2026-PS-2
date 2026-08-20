@@ -1,139 +1,173 @@
-import { Activity, ShoppingCart, Moon } from 'lucide-react'
-import { SimMode } from '../data'
+import { Waveform, ShoppingCart, Moon } from '@phosphor-icons/react'
+import { SimMode, SIM_CONFIG } from '../data'
 import { useSimulator } from '../context/SimulatorContext'
 
 const MODES: {
   id: SimMode
-  icon: typeof Activity
+  Icon: any
   label: string
-  tagline: string
-  description: string
-  effects: string[]
-  accent: string
-  accentBg: string
-  accentBorder: string
-  accentGlow: string
+  desc: string
+  effects: [string, string][]
 }[] = [
   {
     id: 'normal',
-    icon: Activity,
+    Icon: Waveform,
     label: 'Normal Traffic',
-    tagline: 'Steady-state baseline',
-    description: 'Simulates typical production traffic with moderate read patterns and a healthy mix of hot, cold, and evicted cache items.',
+    desc: 'Steady-state production. A healthy mix of hot and cold keys with typical access patterns. The engine runs maintenance-mode eviction.',
     effects: [
-      '~8,700 requests/second',
-      '68% memory utilization',
-      '92% cache hit ratio',
-      'Balanced hot/cold distribution',
+      ['Requests/sec', '~8,700'],
+      ['Memory',       '68%'],
+      ['Hit ratio',    '92.3%'],
+      ['Est. savings', '$12.5k/day'],
     ],
-    accent: 'text-blue-400',
-    accentBg: 'bg-blue-500/10',
-    accentBorder: 'border-blue-500/30',
-    accentGlow: 'rgba(59,130,246,0.15)',
   },
   {
     id: 'flash-sale',
-    icon: ShoppingCart,
+    Icon: ShoppingCart,
     label: 'Flash Sale / Spike',
-    tagline: 'High-load event simulation',
-    description: 'Simulates a flash sale or viral traffic spike. The predictive engine detects the surge and automatically extends TTLs for popular products, preventing DB overload.',
+    desc: 'Viral event or scheduled sale. Read volume spikes 3x. The engine detects frequency surge and extends TTLs on product keys to prevent DB collapse.',
     effects: [
-      '~27,800+ requests/second',
-      '87% memory utilization',
-      '95% cache hit ratio',
-      'Most items promoted to Hot',
+      ['Requests/sec', '~27,800'],
+      ['Memory',       '87%'],
+      ['Hit ratio',    '95.1%'],
+      ['Est. savings', '$38.4k/day'],
     ],
-    accent: 'text-orange-400',
-    accentBg: 'bg-orange-500/10',
-    accentBorder: 'border-orange-500/30',
-    accentGlow: 'rgba(249,115,22,0.12)',
   },
   {
     id: 'idle',
-    icon: Moon,
+    Icon: Moon,
     label: 'Idle Period',
-    tagline: 'Low-traffic overnight mode',
-    description: 'Simulates off-hours low traffic. The engine aggressively evicts cold items to shrink the Redis footprint and reduce costs while the system is quiet.',
+    desc: 'Off-hours, overnight, or post-event quiet window. The engine aggressively shrinks the cache footprint by evicting cold data, cutting Redis cost.',
     effects: [
-      '~1,300 requests/second',
-      '28% memory utilization',
-      '84% cache hit ratio',
-      'Aggressive eviction of cold items',
+      ['Requests/sec', '~1,300'],
+      ['Memory',       '28%'],
+      ['Hit ratio',    '84.6%'],
+      ['Est. savings', '$3.2k/day'],
     ],
-    accent: 'text-slate-400',
-    accentBg: 'bg-slate-600/10',
-    accentBorder: 'border-slate-600/30',
-    accentGlow: 'rgba(100,116,139,0.08)',
   },
 ]
 
 export default function Simulator() {
-  const { mode: activeMode, activateMode } = useSimulator()
+  const { mode: active, activateMode } = useSimulator()
 
   return (
-    <div className="animate-fade-in space-y-8">
+    <div className="animate-fade-in space-y-5">
       <div>
-        <h2 className="text-base font-semibold text-white">Traffic Simulator</h2>
-        <p className="text-xs text-slate-500 mt-1">
-          Activate a scenario to see how the Predictive Caching Engine responds in real time.
-          Dashboard and Cache Items update immediately.
+        <h2 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Traffic Scenarios</h2>
+        <p className="mono text-[11px] mt-1" style={{ color: 'var(--text-3)' }}>
+          Activate a scenario. Dashboard and Cache Items reflect the change immediately.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {MODES.map(m => {
-          const isActive = activeMode === m.id
-          return (
-            <div
-              key={m.id}
-              className={`relative rounded-2xl border p-6 transition-all duration-200 cursor-pointer hover:scale-[1.01] ${m.accentBorder} ${isActive ? 'ring-1 ring-offset-0' : ''}`}
-              style={{
-                background: isActive ? `rgba(10,22,40,0.97)` : 'var(--bg-card)',
-                borderColor: isActive ? undefined : 'var(--border)',
-                boxShadow: isActive ? `0 0 40px ${m.accentGlow}, 0 4px 24px rgba(0,0,0,0.4)` : '0 4px 16px rgba(0,0,0,0.2)',
-              }}
-              onClick={() => activateMode(m.id)}
-            >
-              {isActive && (
-                <div className="absolute top-4 right-4 flex items-center gap-1.5">
-                  <span className={`w-1.5 h-1.5 rounded-full animate-pulse ${m.id === 'normal' ? 'bg-blue-400' : m.id === 'flash-sale' ? 'bg-orange-400' : 'bg-slate-400'}`} />
-                  <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-400">Active</span>
-                </div>
-              )}
-
-              <div className={`flex items-center justify-center w-12 h-12 rounded-xl border mb-4 ${m.accentBg} ${m.accentBorder}`}>
-                <m.icon size={22} className={m.accent} />
-              </div>
-
-              <h3 className="text-sm font-bold text-white mb-0.5">{m.label}</h3>
-              <p className={`text-xs font-medium mb-3 ${m.accent}`}>{m.tagline}</p>
-              <p className="text-xs text-slate-500 leading-relaxed mb-5">{m.description}</p>
-
-              <div className="space-y-2 mb-5">
-                {m.effects.map(e => (
-                  <div key={e} className="flex items-center gap-2 text-xs text-slate-400">
-                    <div className={`w-1 h-1 rounded-full flex-shrink-0 ${m.id === 'normal' ? 'bg-blue-500' : m.id === 'flash-sale' ? 'bg-orange-500' : 'bg-slate-500'}`} />
-                    {e}
+      {/* Comparison table */}
+      <div style={{ border: '1px solid var(--border)', overflowX: 'auto' }}>
+        <table className="w-full min-w-[500px]">
+          <thead>
+            <tr style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)' }}>
+              <th className="px-5 py-3 text-left mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-3)', width: '28%' }}>
+                Metric
+              </th>
+              {MODES.map(m => (
+                <th
+                  key={m.id}
+                  className="px-5 py-3 text-left"
+                  style={{
+                    borderLeft: '1px solid var(--border)',
+                    background: active === m.id ? 'var(--accent-dim)' : undefined,
+                  }}
+                >
+                  <div className="flex items-center gap-2">
+                    <m.Icon
+                      size={13}
+                      weight={active === m.id ? 'fill' : 'regular'}
+                      style={{ color: active === m.id ? 'var(--accent)' : 'var(--text-3)' }}
+                    />
+                    <span
+                      className="text-[11px] font-semibold"
+                      style={{ color: active === m.id ? 'var(--accent)' : 'var(--text-2)' }}
+                    >
+                      {m.label}
+                    </span>
+                    {active === m.id && (
+                      <span className="mono text-[9px] px-1.5 py-0.5 font-semibold uppercase tracking-wider" style={{ background: 'var(--accent)', color: '#000', borderRadius: 2 }}>
+                        active
+                      </span>
+                    )}
                   </div>
-                ))}
-              </div>
-
-              <button
-                onClick={e => { e.stopPropagation(); activateMode(m.id) }}
-                className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-150 border ${
-                  isActive
-                    ? `${m.accentBg} ${m.accent} ${m.accentBorder}`
-                    : 'bg-slate-800/60 text-slate-400 border-slate-700/60 hover:bg-slate-700/60 hover:text-slate-200'
-                }`}
-                style={isActive ? { boxShadow: `0 0 20px ${m.accentGlow}` } : undefined}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {MODES[0].effects.map(([metric], ri) => (
+              <tr
+                key={metric}
+                style={{ borderBottom: ri < MODES[0].effects.length - 1 ? '1px solid var(--border-dim)' : undefined }}
               >
-                {isActive ? 'Currently Active' : `Activate ${m.label}`}
-              </button>
-            </div>
-          )
-        })}
+                <td className="px-5 py-3 mono text-[11px]" style={{ color: 'var(--text-3)' }}>{metric}</td>
+                {MODES.map(m => (
+                  <td
+                    key={m.id}
+                    className="px-5 py-3"
+                    style={{
+                      borderLeft: '1px solid var(--border)',
+                      background: active === m.id ? 'var(--accent-dim)' : undefined,
+                    }}
+                  >
+                    <span
+                      className="mono text-xs font-semibold tabular-nums"
+                      style={{ color: active === m.id ? 'var(--text)' : 'var(--text-3)' }}
+                    >
+                      {m.effects[ri][1]}
+                    </span>
+                  </td>
+                ))}
+              </tr>
+            ))}
+            {/* Activate row */}
+            <tr style={{ borderTop: '1px solid var(--border)', background: 'var(--surface)' }}>
+              <td className="px-5 py-3 mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
+                Activate
+              </td>
+              {MODES.map(m => (
+                <td
+                  key={m.id}
+                  className="px-5 py-3"
+                  style={{ borderLeft: '1px solid var(--border)' }}
+                >
+                  <button
+                    onClick={() => activateMode(m.id)}
+                    className="mono text-[10px] px-3 py-1.5 uppercase tracking-wider font-semibold transition-all"
+                    style={{
+                      background: active === m.id ? 'var(--accent)' : 'var(--surface-2)',
+                      color: active === m.id ? '#000' : 'var(--text-3)',
+                      border: `1px solid ${active === m.id ? 'var(--accent)' : 'var(--border)'}`,
+                      borderRadius: 2,
+                    }}
+                  >
+                    {active === m.id ? 'running' : 'activate'}
+                  </button>
+                </td>
+              ))}
+            </tr>
+          </tbody>
+        </table>
       </div>
 
+      {/* Active mode description */}
+      {MODES.filter(m => m.id === active).map(m => (
+        <div
+          key={m.id}
+          style={{ border: '1px solid var(--border-bright)', background: 'var(--surface)' }}
+          className="px-5 py-4"
+        >
+          <div className="flex items-center gap-2 mb-2">
+            <span className="w-1.5 h-1.5 rounded-full pulse-amber" style={{ background: 'var(--accent)', flexShrink: 0 }} />
+            <span className="text-xs font-semibold" style={{ color: 'var(--accent)' }}>{m.label}</span>
+          </div>
+          <p className="mono text-[11px] leading-relaxed" style={{ color: 'var(--text-2)' }}>{m.desc}</p>
+        </div>
+      ))}
     </div>
   )
 }

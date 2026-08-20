@@ -3,40 +3,54 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #04081a;
-  --bg-card: #0a1628;
-  --bg-card-hover: #0f1e38;
-  --border: rgba(59, 130, 246, 0.15);
-  --border-bright: rgba(59, 130, 246, 0.3);
+  --bg:           #0d0d0d;
+  --surface:      #141414;
+  --surface-2:    #1c1c1c;
+  --surface-3:    #242424;
+  --border:       #262626;
+  --border-bright:#333333;
+  --accent:       #f59e0b;
+  --accent-dim:   rgba(245, 158, 11, 0.10);
+  --accent-glow:  rgba(245, 158, 11, 0.18);
+  --text:         #efefef;
+  --text-2:       #888888;
+  --text-3:       #525252;
+  --red:          #f87171;
+  --blue:         #60a5fa;
 }
 
-* {
-  box-sizing: border-box;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 14px; }
 
 body {
-  margin: 0;
-  background-color: var(--bg-primary);
-  color: #f1f5f9;
-  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Space Grotesk', system-ui, sans-serif;
   -webkit-font-smoothing: antialiased;
+  min-height: 100dvh;
 }
 
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #0a1628;
-}
-::-webkit-scrollbar-thumb {
-  background: #1e3a5f;
-  border-radius: 3px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #3b82f6;
-}
+/* ── Typography ─────────────────────────────────── */
+.mono { font-family: 'JetBrains Mono', monospace; }
 
-.recharts-tooltip-wrapper {
-  outline: none !important;
+/* ── Divider ────────────────────────────────────── */
+.hairline { border-color: var(--border); }
+
+/* ── Scrollbar ──────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+/* ── Recharts ───────────────────────────────────── */
+.recharts-tooltip-wrapper { outline: none !important; }
+.recharts-cartesian-grid-horizontal line { stroke: var(--border) !important; }
+.recharts-cartesian-grid-vertical   line { display: none !important; }
+
+/* ── Utility: amber pulse ───────────────────────── */
+@keyframes amberPulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
 }
+.pulse-amber { animation: amberPulse 2s ease-in-out infinite; }

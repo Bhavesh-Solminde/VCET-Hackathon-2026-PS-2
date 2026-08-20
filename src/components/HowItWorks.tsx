@@ -1,160 +1,118 @@
-import { Globe, BarChart2, Clock, Trash2, Zap, AlertCircle, CheckCircle2, TrendingDown } from 'lucide-react'
+import { Globe, ChartBar, Timer, Trash, Lightning, Warning, CheckCircle } from '@phosphor-icons/react'
 
-const FLOW_STEPS = [
-  {
-    icon: Globe,
-    color: 'text-blue-400',
-    bg: 'bg-blue-500/10 border-blue-500/20',
-    label: 'User Traffic',
-    desc: 'Read requests arrive from application layer',
-  },
-  {
-    icon: BarChart2,
-    color: 'text-violet-400',
-    bg: 'bg-violet-500/10 border-violet-500/20',
-    label: 'Traffic Analysis',
-    desc: 'Live read-frequency patterns analyzed continuously',
-  },
-  {
-    icon: Clock,
-    color: 'text-cyan-400',
-    bg: 'bg-cyan-500/10 border-cyan-500/20',
-    label: 'Dynamic TTL Mutation',
-    desc: 'Hot items get extended TTLs, cold items shrink',
-  },
-  {
-    icon: Trash2,
-    color: 'text-orange-400',
-    bg: 'bg-orange-500/10 border-orange-500/20',
-    label: 'Evict Rare Items',
-    desc: 'Cold data instantly evicted to free cache space',
-  },
-  {
-    icon: Zap,
-    color: 'text-emerald-400',
-    bg: 'bg-emerald-500/10 border-emerald-500/20',
-    label: 'Optimized Cache',
-    desc: 'Self-tuned cache — no manual rules needed',
-  },
+const STEPS = [
+  { Icon: Globe,     label: 'Read request arrives',          detail: 'App layer sends a read to the caching layer first, not the DB.' },
+  { Icon: ChartBar,  label: 'Frequency analysis runs',       detail: 'Live read patterns sampled every 1.5 seconds per key.' },
+  { Icon: Timer,     label: 'TTL mutated dynamically',       detail: 'Hot keys get extended TTLs. Cold keys get shortened.' },
+  { Icon: Trash,     label: 'Cold data evicted immediately', detail: 'Rarely-read keys are flushed to free Redis memory.' },
+  { Icon: Lightning, label: 'Cache serves optimized data',   detail: 'Next request hits cache. DB is never touched.' },
 ]
 
-const COMPARISON = [
+const COMPARE = [
   {
     title: 'Before',
-    icon: AlertCircle,
-    iconColor: 'text-red-400',
-    bg: 'bg-red-500/5',
-    borderColor: 'rgba(239,68,68,0.2)',
+    Icon: Warning,
+    color: 'var(--red)',
     points: [
-      { label: 'Static TTLs', detail: 'Fixed expiration rules set manually' },
-      { label: 'Cache Bloat', detail: 'Everything cached indiscriminately' },
-      { label: 'DB Overload', detail: 'Too little caching = repeated DB reads' },
-      { label: 'Overspend', detail: 'Paying for Redis memory nobody uses' },
+      ['Static TTLs', 'fixed expiration, set once and forgotten'],
+      ['Cache bloat', 'everything cached regardless of access frequency'],
+      ['DB overload', 'conservative caching floods primary DB with reads'],
+      ['Predictable overspend', 'paying for Redis memory no one uses'],
     ],
   },
   {
-    title: 'Our Solution',
-    icon: Zap,
-    iconColor: 'text-blue-400',
-    bg: 'bg-blue-500/5',
-    borderColor: 'rgba(59,130,246,0.3)',
+    title: 'After',
+    Icon: CheckCircle,
+    color: 'var(--accent)',
     points: [
-      { label: 'Live Frequency Analysis', detail: 'Reads patterns every 1.5s' },
-      { label: 'Dynamic TTL Extension', detail: 'Hot items auto-extended up to 4h' },
-      { label: 'Instant Cold Eviction', detail: 'Rare data freed immediately' },
-      { label: 'Self-Tuning Loop', detail: 'No manual config changes needed' },
-    ],
-    highlight: true,
-  },
-  {
-    title: 'Result',
-    icon: CheckCircle2,
-    iconColor: 'text-emerald-400',
-    bg: 'bg-emerald-500/5',
-    borderColor: 'rgba(16,185,129,0.2)',
-    points: [
-      { label: '92%+ Hit Ratio', detail: 'Fewer primary DB reads' },
-      { label: '40-60% Cost Cut', detail: 'Smaller, smarter cache footprint' },
-      { label: 'Spike Resilience', detail: 'Traffic surges absorbed cleanly' },
-      { label: 'Zero Config Drift', detail: 'Adapts automatically 24/7' },
+      ['Dynamic TTLs', 'extended for hot keys, shortened for cold ones'],
+      ['Selective caching', 'only frequently-read data stays in memory'],
+      ['DB protection', '92%+ hit ratio keeps primary DB load low'],
+      ['Right-sized cost', 'smaller cache footprint, lower monthly bill'],
     ],
   },
 ]
 
-const ROADMAP = [
-  { icon: '🧠', label: 'ML Pre-Caching', desc: 'Warm cache before expected spikes (flash sales, launches)' },
-  { icon: '🌍', label: 'Multi-Region Sync', desc: 'Consistent cache across global edge nodes' },
-  { icon: '🔍', label: 'Anomaly Detection', desc: 'Flag unusual access patterns in real time' },
-  { icon: '💰', label: 'Cost Forecasting', desc: 'Predict monthly cloud spend from traffic trends' },
-  { icon: '🔌', label: 'Pluggable Backends', desc: 'Memcached, CDN edge, DynamoDB DAX support' },
+const NEXT = [
+  { label: 'ML Pre-Caching',    detail: 'Warm cache before predicted spikes using historical patterns' },
+  { label: 'Multi-Region Sync', detail: 'Consistent hot-key set across global edge nodes' },
+  { label: 'Anomaly Detection', detail: 'Flag unusual access patterns before they cause incidents' },
+  { label: 'Cost Forecasting',  detail: 'Predict monthly Redis spend from live traffic trends' },
+  { label: 'Backend Plugins',   detail: 'Memcached, CDN edge, DynamoDB DAX - swap the backend' },
 ]
 
 export default function HowItWorks() {
   return (
     <div className="animate-fade-in space-y-10">
-      {/* Flow diagram */}
+
+      {/* Flow */}
       <section>
-        <div className="mb-6">
-          <h2 className="text-base font-semibold text-white">System Flow</h2>
-          <p className="text-xs text-slate-500 mt-1">How predictive caching works end-to-end</p>
+        <div className="mb-5">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Request flow</h2>
+          <p className="mono text-[11px] mt-1" style={{ color: 'var(--text-3)' }}>
+            how a read request moves through the predictive layer
+          </p>
         </div>
-        <div
-          className="rounded-2xl border p-8"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-        >
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            {FLOW_STEPS.map((step, i) => (
-              <div key={step.label} className="flex flex-col md:flex-row items-center gap-4 flex-1 min-w-0">
-                <div className="flex flex-col items-center text-center min-w-[120px]">
-                  <div className={`flex items-center justify-center w-14 h-14 rounded-2xl border mb-3 ${step.bg}`}>
-                    <step.icon size={24} className={step.color} />
-                  </div>
-                  <p className="text-xs font-semibold text-slate-200 mb-1">{step.label}</p>
-                  <p className="text-[11px] text-slate-500 leading-relaxed px-1">{step.desc}</p>
-                </div>
-                {i < FLOW_STEPS.length - 1 && (
-                  <div className="hidden md:flex flex-col items-center flex-shrink-0 mx-2">
-                    <div className="flex items-center gap-1">
-                      <div className="w-6 h-px bg-slate-700" />
-                      <div className="w-0 h-0 border-t-[4px] border-t-transparent border-b-[4px] border-b-transparent border-l-[6px] border-l-slate-600" />
-                    </div>
-                  </div>
-                )}
+        <div style={{ border: '1px solid var(--border)' }}>
+          {STEPS.map((s, i) => (
+            <div
+              key={s.label}
+              className="flex items-start gap-5 px-6 py-4"
+              style={{ borderBottom: i < STEPS.length - 1 ? '1px solid var(--border-dim)' : undefined }}
+            >
+              <div className="flex items-center gap-4 flex-shrink-0">
+                <span className="mono text-[10px] w-4 text-right" style={{ color: 'var(--text-3)' }}>
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <s.Icon
+                  size={15}
+                  weight={i === 4 ? 'fill' : 'regular'}
+                  style={{ color: i === 4 ? 'var(--accent)' : 'var(--text-3)' }}
+                />
               </div>
-            ))}
-          </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-xs font-semibold" style={{ color: 'var(--text)' }}>{s.label}</div>
+                <div className="mono text-[11px] mt-0.5" style={{ color: 'var(--text-3)' }}>{s.detail}</div>
+              </div>
+              {i < STEPS.length - 1 && (
+                <div className="flex-shrink-0 self-center">
+                  <div style={{ width: 1, height: 16, background: 'var(--border)', display: 'none' }} />
+                </div>
+              )}
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* Before / Solution / Result */}
+      {/* Before / After */}
       <section>
-        <div className="mb-6">
-          <h2 className="text-base font-semibold text-white">Before vs Solution vs Result</h2>
-          <p className="text-xs text-slate-500 mt-1">The problem we solve and the outcomes we deliver</p>
+        <div className="mb-5">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Before and after</h2>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {COMPARISON.map(col => (
-            <div
-              key={col.title}
-              className="rounded-2xl border p-6"
-              style={{
-                background: col.bg,
-                borderColor: col.borderColor,
-                boxShadow: col.highlight ? '0 0 40px rgba(59,130,246,0.08)' : undefined,
-              }}
-            >
-              <div className="flex items-center gap-2.5 mb-5">
-                <col.icon size={18} className={col.iconColor} />
-                <span className="text-sm font-semibold text-white">{col.title}</span>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {COMPARE.map(col => (
+            <div key={col.title} style={{ border: '1px solid var(--border)' }}>
+              <div
+                className="flex items-center gap-2 px-5 py-3"
+                style={{ borderBottom: '1px solid var(--border)', background: 'var(--surface)' }}
+              >
+                <col.Icon size={13} weight="fill" style={{ color: col.color }} />
+                <span className="text-xs font-semibold" style={{ color: col.color }}>{col.title}</span>
               </div>
-              <div className="space-y-3">
-                {col.points.map(pt => (
-                  <div key={pt.label} className="flex items-start gap-2.5">
-                    <div className="w-1 h-1 rounded-full bg-slate-600 mt-2 flex-shrink-0" />
-                    <div>
-                      <p className="text-xs font-semibold text-slate-300">{pt.label}</p>
-                      <p className="text-[11px] text-slate-500 mt-0.5">{pt.detail}</p>
-                    </div>
+              <div>
+                {col.points.map(([title, desc], i) => (
+                  <div
+                    key={title}
+                    className="px-5 py-3 flex items-start gap-4"
+                    style={{ borderBottom: i < col.points.length - 1 ? '1px solid var(--border-dim)' : undefined }}
+                  >
+                    <span
+                      className="mono text-[11px] font-semibold flex-shrink-0 pt-px"
+                      style={{ color: col.color, minWidth: 90 }}
+                    >
+                      {title}
+                    </span>
+                    <span className="mono text-[11px]" style={{ color: 'var(--text-3)' }}>{desc}</span>
                   </div>
                 ))}
               </div>
@@ -165,29 +123,25 @@ export default function HowItWorks() {
 
       {/* Roadmap */}
       <section>
-        <div className="mb-6">
-          <h2 className="text-base font-semibold text-white">What's Next</h2>
-          <p className="text-xs text-slate-500 mt-1">Planned enhancements for the full product</p>
+        <div className="mb-5">
+          <h2 className="text-sm font-semibold" style={{ color: 'var(--text)' }}>Planned enhancements</h2>
         </div>
-        <div
-          className="rounded-2xl border p-6"
-          style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            {ROADMAP.map(item => (
-              <div
-                key={item.label}
-                className="p-4 rounded-xl border transition-colors hover:border-blue-500/30"
-                style={{ background: 'rgba(255,255,255,0.02)', borderColor: 'rgba(255,255,255,0.06)' }}
-              >
-                <div className="text-xl mb-2">{item.icon}</div>
-                <p className="text-xs font-semibold text-slate-200 mb-1">{item.label}</p>
-                <p className="text-[11px] text-slate-500 leading-relaxed">{item.desc}</p>
-              </div>
-            ))}
-          </div>
+        <div style={{ border: '1px solid var(--border)' }}>
+          {NEXT.map((n, i) => (
+            <div
+              key={n.label}
+              className="flex items-start gap-6 px-5 py-3"
+              style={{ borderBottom: i < NEXT.length - 1 ? '1px solid var(--border-dim)' : undefined }}
+            >
+              <span className="mono text-xs font-semibold flex-shrink-0" style={{ color: 'var(--text-2)', minWidth: 140 }}>
+                {n.label}
+              </span>
+              <span className="mono text-[11px]" style={{ color: 'var(--text-3)' }}>{n.detail}</span>
+            </div>
+          ))}
         </div>
       </section>
+
     </div>
   )
 }

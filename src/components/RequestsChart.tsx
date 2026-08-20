@@ -1,79 +1,61 @@
 import { useMemo } from 'react'
 import {
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts'
 import { TimePoint } from '../data'
 
-interface RequestsChartProps {
-  data: TimePoint[]
-}
-
-const CustomTooltip = ({ active, payload, label }: any) => {
+const Tip = ({ active, payload, label }: any) => {
   if (!active || !payload?.length) return null
   return (
     <div
-      className="px-3 py-2 rounded-lg border text-xs"
-      style={{ background: '#0a1628', borderColor: 'rgba(59,130,246,0.3)' }}
+      className="px-3 py-2 mono text-xs"
+      style={{ background: 'var(--surface-2)', border: '1px solid var(--border-bright)' }}
     >
-      <p className="text-slate-400 mb-1">{label}</p>
-      <p className="text-blue-300 font-semibold font-mono">
-        {payload[0].value.toLocaleString()} req/s
-      </p>
+      <div style={{ color: 'var(--text-3)' }}>{label}</div>
+      <div style={{ color: 'var(--accent)' }}>{payload[0].value.toLocaleString()} /s</div>
     </div>
   )
 }
 
-export default function RequestsChart({ data }: RequestsChartProps) {
-  const displayData = useMemo(() => data.slice(-40), [data])
+export default function RequestsChart({ data }: { data: TimePoint[] }) {
+  const pts = useMemo(() => data.slice(-40), [data])
 
   return (
-    <div
-      className="rounded-2xl border p-6"
-      style={{ background: 'var(--bg-card)', borderColor: 'var(--border)' }}
-    >
-      <div className="flex items-center justify-between mb-6">
+    <div style={{ border: '1px solid var(--border)' }} className="p-5">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <h3 className="text-sm font-semibold text-white">Live Requests / Second</h3>
-          <p className="text-xs text-slate-500 mt-0.5">Real-time traffic — updates every 1.5s</p>
+          <div className="text-xs font-semibold" style={{ color: 'var(--text)' }}>Requests / sec</div>
+          <div className="mono text-[10px] mt-0.5" style={{ color: 'var(--text-3)' }}>live stream, 1.5s interval</div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse" />
-          <span className="text-xs text-slate-500 font-mono">LIVE</span>
+        <div className="flex items-center gap-1.5 mono text-[10px]" style={{ color: 'var(--text-3)' }}>
+          <span className="w-1.5 h-1.5 rounded-full pulse-amber" style={{ background: 'var(--accent)' }} />
+          LIVE
         </div>
       </div>
-
-      <ResponsiveContainer width="100%" height={220}>
-        <AreaChart data={displayData} margin={{ top: 4, right: 4, left: -10, bottom: 0 }}>
+      <ResponsiveContainer width="100%" height={180}>
+        <AreaChart data={pts} margin={{ top: 2, right: 2, left: -18, bottom: 0 }}>
           <defs>
-            <linearGradient id="reqGradient" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="5%"  stopColor="#3b82f6" stopOpacity={0.25} />
-              <stop offset="95%" stopColor="#3b82f6" stopOpacity={0.02} />
+            <linearGradient id="ambGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%"   stopColor="#f59e0b" stopOpacity={0.18} />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity={0.02} />
             </linearGradient>
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
           <XAxis
             dataKey="time"
-            tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
-            tickLine={false}
-            axisLine={false}
-            interval={9}
+            tick={{ fill: 'var(--text-3)', fontSize: 9, fontFamily: 'JetBrains Mono' }}
+            tickLine={false} axisLine={false} interval={9}
           />
           <YAxis
-            tick={{ fill: '#64748b', fontSize: 10, fontFamily: 'JetBrains Mono' }}
-            tickLine={false}
-            axisLine={false}
+            tick={{ fill: 'var(--text-3)', fontSize: 9, fontFamily: 'JetBrains Mono' }}
+            tickLine={false} axisLine={false}
             tickFormatter={v => `${(v / 1000).toFixed(0)}k`}
           />
-          <Tooltip content={<CustomTooltip />} />
+          <Tooltip content={<Tip />} cursor={{ stroke: 'var(--border-bright)', strokeWidth: 1 }} />
           <Area
-            type="monotone"
-            dataKey="value"
-            stroke="#3b82f6"
-            strokeWidth={2}
-            fill="url(#reqGradient)"
-            dot={false}
-            activeDot={{ r: 4, fill: '#3b82f6', stroke: '#60a5fa', strokeWidth: 2 }}
+            type="monotone" dataKey="value"
+            stroke="#f59e0b" strokeWidth={1.5}
+            fill="url(#ambGrad)" dot={false}
+            activeDot={{ r: 3, fill: '#f59e0b', stroke: 'var(--bg)', strokeWidth: 2 }}
           />
         </AreaChart>
       </ResponsiveContainer>
