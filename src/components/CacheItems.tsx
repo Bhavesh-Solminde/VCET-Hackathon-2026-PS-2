@@ -6,17 +6,17 @@ import { useSimulator } from '../context/SimulatorContext'
 type SortKey = keyof Pick<CacheItem, 'key' | 'accessFrequency' | 'ttlSeconds' | 'status' | 'lastAccessedSeconds'>
 type SortDir = 'asc' | 'desc'
 
-const STATUS: Record<CacheStatus, { label: string; color: string }> = {
-  hot:     { label: 'HOT', color: 'var(--red)'   },
-  cold:    { label: 'CLD', color: 'var(--blue)'  },
-  evicted: { label: 'EVT', color: 'var(--text-3)' },
+const STATUS: Record<CacheStatus, { label: string; color: string; bg: string; rowBg: string }> = {
+  hot:     { label: 'HOT', color: 'var(--red)',    bg: 'rgba(244,63,94,0.18)',  rowBg: 'rgba(244,63,94,0.05)' },
+  cold:    { label: 'CLD', color: 'var(--blue)',   bg: 'rgba(96,165,250,0.18)', rowBg: 'rgba(96,165,250,0.04)' },
+  evicted: { label: 'EVT', color: 'var(--text-3)', bg: 'rgba(60,60,80,0.20)',   rowBg: 'transparent' },
 }
 
 function SortBtn({ col, active, dir }: { col: string; active: SortKey; dir: SortDir }) {
-  if (col !== active) return <ArrowsDownUp size={11} style={{ color: 'var(--text-3)' }} />
+  if (col !== active) return <ArrowsDownUp size={10} style={{ color: 'var(--text-3)', flexShrink: 0 }} />
   return dir === 'asc'
-    ? <ArrowUp size={11} style={{ color: 'var(--accent)' }} />
-    : <ArrowDown size={11} style={{ color: 'var(--accent)' }} />
+    ? <ArrowUp size={10} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+    : <ArrowDown size={10} style={{ color: 'var(--accent)', flexShrink: 0 }} />
 }
 
 export default function CacheItems() {
@@ -59,38 +59,41 @@ export default function CacheItems() {
 
   const Th = ({ col, label }: { col: SortKey; label: string }) => (
     <th
-      className="px-4 py-2.5 text-left cursor-pointer select-none"
+      className="px-4 py-3 text-left cursor-pointer select-none"
       onClick={() => toggleSort(col)}
       style={{ borderBottom: '1px solid var(--border)' }}
     >
-      <div className="flex items-center gap-1 mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
+      <div className="flex items-center gap-1.5 mono text-[10px] uppercase tracking-wider" style={{ color: 'var(--text-3)' }}>
         {label} <SortBtn col={col} active={sortKey} dir={sortDir} />
       </div>
     </th>
   )
 
   return (
-    <div className="animate-fade-in">
+    <div className="animate-fade-in space-y-4">
       {/* Toolbar */}
-      <div
-        className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-4 py-3"
-        style={{ border: '1px solid var(--border)', borderBottom: 'none', background: 'var(--surface)' }}
-      >
-        <div className="flex items-center gap-1">
-          {(['all', 'hot', 'cold', 'evicted'] as const).map(s => (
-            <button
-              key={s}
-              onClick={() => setFilter(s)}
-              className="mono text-[10px] px-2.5 py-1 uppercase tracking-wider transition-colors"
-              style={{
-                color:      filter === s ? (s === 'all' ? 'var(--text)' : STATUS[s as CacheStatus]?.color ?? 'var(--text)') : 'var(--text-3)',
-                background: filter === s ? 'var(--surface-2)' : 'transparent',
-                border:     `1px solid ${filter === s ? 'var(--border-bright)' : 'transparent'}`,
-              }}
-            >
-              {s === 'all' ? `all (${items.length})` : `${STATUS[s].label} (${counts[s] ?? 0})`}
-            </button>
-          ))}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-1.5">
+          {(['all', 'hot', 'cold', 'evicted'] as const).map(s => {
+            const isAll = s === 'all'
+            const st = isAll ? null : STATUS[s]
+            const active = filter === s
+            return (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                className="mono text-[10px] px-3 py-1.5 font-medium uppercase tracking-wider transition-all duration-100"
+                style={{
+                  borderRadius: 4,
+                  background: active ? (isAll ? 'var(--surface-3)' : st!.bg) : 'var(--surface-2)',
+                  color:       active ? (isAll ? 'var(--text)' : st!.color) : 'var(--text-3)',
+                  border:      `1px solid ${active ? (isAll ? 'var(--border-bright)' : 'transparent') : 'var(--border)'}`,
+                }}
+              >
+                {s === 'all' ? `all · ${items.length}` : `${STATUS[s].label} · ${counts[s] ?? 0}`}
+              </button>
+            )
+          })}
         </div>
 
         <div className="relative">
@@ -103,10 +106,11 @@ export default function CacheItems() {
             placeholder="filter keys..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="mono text-[11px] pl-7 pr-3 py-1.5 w-48 focus:outline-none"
+            className="mono text-[11px] pl-7 pr-3 py-1.5 w-48 focus:outline-none transition-colors"
             style={{
               background: 'var(--surface-2)',
               border: '1px solid var(--border)',
+              borderRadius: 4,
               color: 'var(--text)',
             }}
           />
@@ -114,73 +118,92 @@ export default function CacheItems() {
       </div>
 
       {/* Table */}
-      <div style={{ border: '1px solid var(--border)' }} className="overflow-x-auto">
-        <table className="w-full min-w-[600px]">
-          <thead style={{ background: 'var(--surface)' }}>
-            <tr>
-              <Th col="key"                 label="Key"         />
-              <Th col="accessFrequency"     label="Freq"        />
-              <Th col="ttlSeconds"          label="TTL"         />
-              <Th col="status"              label="Status"      />
-              <Th col="lastAccessedSeconds" label="Last Access" />
-            </tr>
-          </thead>
-          <tbody>
-            {visible.map((item, i) => (
-              <tr
-                key={item.id}
-                className="transition-colors group"
-                style={{
-                  borderBottom: i < visible.length - 1 ? '1px solid var(--border-dim)' : undefined,
-                }}
-              >
-                <td className="px-4 py-2.5">
-                  <span className="mono text-[11px]" style={{ color: 'var(--text-2)' }}>{item.key}</span>
-                </td>
-                <td className="px-4 py-2.5">
-                  <span className="mono text-[11px] tabular-nums" style={{ color: 'var(--text)' }}>
-                    {item.accessFrequency.toLocaleString()}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5">
-                  <span
-                    className="mono text-[11px]"
-                    style={{ color: item.status === 'evicted' ? 'var(--text-3)' : 'var(--text-2)' }}
-                  >
-                    {item.ttl}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5">
-                  <span
-                    className="mono text-[10px] font-semibold uppercase tracking-wider"
-                    style={{ color: STATUS[item.status].color }}
-                  >
-                    {STATUS[item.status].label}
-                  </span>
-                </td>
-                <td className="px-4 py-2.5">
-                  <span className="mono text-[11px]" style={{ color: 'var(--text-3)' }}>
-                    {item.lastAccessed}
-                  </span>
-                </td>
-              </tr>
-            ))}
-            {visible.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-10 text-center mono text-[11px]" style={{ color: 'var(--text-3)' }}>
-                  no items match filter
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
       <div
-        className="px-4 py-2 mono text-[10px]"
-        style={{ border: '1px solid var(--border)', background: 'var(--surface)', color: 'var(--text-3)' }}
+        style={{
+          border: '1px solid var(--border)',
+          borderRadius: 8,
+          overflow: 'hidden',
+        }}
       >
-        {visible.length} / {items.length} keys shown - frequencies update every 2.5s
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[600px]">
+            <thead style={{ background: 'var(--surface-2)' }}>
+              <tr>
+                <Th col="key"                 label="Key"         />
+                <Th col="accessFrequency"     label="Frequency"   />
+                <Th col="ttlSeconds"          label="TTL"         />
+                <Th col="status"              label="Status"      />
+                <Th col="lastAccessedSeconds" label="Last Access" />
+              </tr>
+            </thead>
+            <tbody>
+              {visible.map((item, i) => {
+                const st = STATUS[item.status]
+                return (
+                  <tr
+                    key={item.id}
+                    style={{
+                      background: st.rowBg,
+                      borderBottom: i < visible.length - 1 ? '1px solid var(--border)' : undefined,
+                    }}
+                  >
+                    <td className="px-4 py-2.5">
+                      <span className="mono text-[11px]" style={{ color: 'var(--text-2)' }}>{item.key}</span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className="mono text-xs tabular-nums font-medium" style={{ color: 'var(--text)' }}>
+                        {item.accessFrequency.toLocaleString()}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span
+                        className="mono text-[11px]"
+                        style={{ color: item.status === 'evicted' ? 'var(--text-3)' : 'var(--text-2)' }}
+                      >
+                        {item.ttl}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span
+                        className="mono text-[9px] font-semibold uppercase tracking-wider px-2 py-0.5"
+                        style={{
+                          color: st.color,
+                          background: st.bg,
+                          borderRadius: 3,
+                        }}
+                      >
+                        {st.label}
+                      </span>
+                    </td>
+                    <td className="px-4 py-2.5">
+                      <span className="mono text-[11px]" style={{ color: 'var(--text-3)' }}>
+                        {item.lastAccessed}
+                      </span>
+                    </td>
+                  </tr>
+                )
+              })}
+              {visible.length === 0 && (
+                <tr>
+                  <td colSpan={5} className="px-4 py-10 text-center mono text-[11px]" style={{ color: 'var(--text-3)' }}>
+                    no items match filter
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div
+          className="px-4 py-2 mono text-[10px]"
+          style={{
+            borderTop: '1px solid var(--border)',
+            background: 'var(--surface-2)',
+            color: 'var(--text-3)',
+          }}
+        >
+          {visible.length} / {items.length} keys · frequencies update every 2.5s
+        </div>
       </div>
     </div>
   )

@@ -13,7 +13,7 @@ function AppContent() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+    <div className="min-h-screen" style={{ background: 'var(--bg)' }}>
       <Header activeTab={activeTab} onTabChange={setActiveTab} />
       <Toast />
       <main className="max-w-screen-xl mx-auto px-6 py-8">

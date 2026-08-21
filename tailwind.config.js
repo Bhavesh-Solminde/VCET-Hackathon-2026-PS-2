@@ -4,7 +4,7 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Space Grotesk', 'system-ui', 'sans-serif'],
+        sans: ['Outfit', 'system-ui', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
       },
       colors: {
